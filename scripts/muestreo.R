@@ -41,7 +41,7 @@ cat("Ciudades en la población: "); print(table(poblacion$ciudad))
 #         Pista: head(poblacion, 20) — igual que la demo de clase.
 #         Después de correrlo, mira la composición por ciudad que imprime el
 #         reporte: ¿es un corte al azar? ¿alguna ciudad falta por completo?
-muestra_conv <- NULL
+muestra_conv <- head(poblacion, 20)
 
 # ---------------------------------------------------------------------------
 # 3. Muestra aleatoria simple: el sorteo de 20
@@ -49,10 +49,30 @@ muestra_conv <- NULL
 # TODO 2: sortea 20 clientes con la misma probabilidad para todos (20/400 = 5 %).
 #         Pista: poblacion[sample(nrow(poblacion), 20), ] con set.seed(1)
 #         delante para que sea reproducible (sin set.seed cambia cada vez).
+set.seed(1)
+indices_aas <- sample(nrow(poblacion), 20)
+muestra_aas <- poblacion[indices_aas, ]
+
 # TODO 3: repite el sorteo con las semillas 2 a 5 y anota las 5 medias en el
 #         informe: la variabilidad de la estimación es parte de la lección.
 #         Pista: for (semilla in 1:5) { set.seed(semilla); ... }
-muestra_aas <- NULL
+cat("\nMedias del muestreo aleatorio simple por semilla:\n")
+
+medias_semillas <- numeric(5)
+
+for (semilla in 1:5) {
+  set.seed(semilla)
+
+  indices <- sample(nrow(poblacion), 20)
+  muestra_semilla <- poblacion[indices, ]
+
+  medias_semillas[semilla] <- mean(muestra_semilla$ingresos_mensuales)
+
+  cat(sprintf(
+    "  Semilla %d: %.2f USD\n",
+    semilla, medias_semillas[semilla]
+  ))
+}
 
 # ---------------------------------------------------------------------------
 # 4. Muestra estratificada: 5 % dentro de cada ciudad
@@ -62,7 +82,18 @@ muestra_aas <- NULL
 #         Cuenca (20 en total).
 #         Pista: library(dplyr); poblacion |> group_by(ciudad) |> slice_sample(prop = 0.05)
 #         ¿Qué garantiza este diseño que el sorteo simple no garantiza?
-muestra_est <- NULL
+set.seed(1)
+
+muestras_por_ciudad <- lapply(
+  split(poblacion, poblacion$ciudad),
+  function(grupo) {
+    cantidad <- round(nrow(grupo) * 0.05)
+    grupo[sample(nrow(grupo), cantidad), ]
+  }
+)
+
+muestra_est <- do.call(rbind, muestras_por_ciudad)
+rownames(muestra_est) <- NULL
 
 # ---------------------------------------------------------------------------
 # 5. Comparación final
